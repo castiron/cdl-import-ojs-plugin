@@ -188,7 +188,7 @@ class Cc
      */
     protected function cleanRawData(array $rows): array
     {
-        $extractLicense = function (string $str): string {
+        $extractLicense = function (string $str) {
             preg_match('/"(https:\/\/creativecommons.org\/[^"]+)"/', $str, $matches);
             return @$matches[1];
         };

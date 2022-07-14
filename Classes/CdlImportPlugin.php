@@ -95,7 +95,7 @@ class CdlImportPlugin extends ImportExportPlugin
     /**
      * Display the command-line usage information
      */
-    function help(): string
+    function help(): void
     {
         echo "PUT SOME HELPFUL INFO HERE.\n";
     }
