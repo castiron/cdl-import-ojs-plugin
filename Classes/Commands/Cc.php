@@ -259,7 +259,7 @@ class Cc
             $total += $number;
             echo $statKey . ': ' . $number . PHP_EOL;
         }
-        echo 'TOTAL: ' . $total . PHP_EOL;
+        echo 'TOTAL ISSUES: ' . $total . PHP_EOL;
     }
 
     /**
@@ -312,11 +312,33 @@ class Cc
         /**
          * @psalm-suppress UndefinedClass
          */
-        $articles = (new \PublishedArticleDAO)->getPublishedArticles($issues[0]->getId());
+        $publishedArticles = (new \PublishedArticleDAO)->getPublishedArticles($issues[0]->getId());
+
+        /**
+         * @psalm-suppress UndefinedClass
+         */
+        $articleDAO = new \ArticleDAO;
 
         // iterate the articles
-        // upsert new field on the article_settings table
+        foreach($publishedArticles as $publishedArticle) {
+            $id = $publishedArticle->getId();
 
+            $article = $articleDAO->getArticle($id);
+            $articleDAO->replace('article_settings',
+                 [
+                     'setting_name' => 'eschol_license_url',
+                     'setting_value' => $row->license_url,
+                     'setting_type' => 'string',
+                     'locale' => 'en_US',
+                     'article_id' => $article->getId(),
+                 ],
+                 [
+                     'article_id',
+                     'locale',
+                     'setting_name'
+                 ]
+            );
+        }
 
         $this->log('OK', $row);
     }
