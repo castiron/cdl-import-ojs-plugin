@@ -227,7 +227,7 @@ class Cc
 
     /**
      * @param $row array
-     * @return mixed
+     * @return string
      */
     protected function formatIssueInfo(object $row): string
     {
@@ -253,11 +253,27 @@ class Cc
     protected function printStats(): void
     {
         $total = 0;
-        echo '==========================================' . PHP_EOL . 'RESULTS' . PHP_EOL . '==========================================' . PHP_EOL;
+        echo str_repeat('=', 42) . PHP_EOL . 'RESULTS' . PHP_EOL . str_repeat('=', 42) . PHP_EOL;
         foreach (array_keys(self::$statKeys) as $statKey) {
             $number = array_key_exists($statKey, $this->stats) ? count($this->stats[$statKey]) : 0;
             $total += $number;
-            echo $statKey . ': ' . $number . PHP_EOL;
+
+            if($this->verbose) {
+                echo $statKey . " items ($number): " . PHP_EOL;
+
+                if (array_key_exists($statKey, $this->stats)) {
+                    foreach ($this->stats[$statKey] as $row) {
+                        echo str_pad($row->journal_path, 35);
+                        echo str_pad($row->issue_volume, 4);
+                        echo str_pad($row->issue_number, 4);
+                        echo str_pad($row->issue_publication_date, 10);
+                        echo PHP_EOL;
+                    }
+                }
+            } else {
+                echo $statKey . " items: $number" . PHP_EOL;
+            }
+            echo PHP_EOL;
         }
         echo 'TOTAL ISSUES: ' . $total . PHP_EOL;
     }
@@ -320,24 +336,27 @@ class Cc
         $articleDAO = new \ArticleDAO;
 
         // iterate the articles
-        foreach($publishedArticles as $publishedArticle) {
-            $id = $publishedArticle->getId();
+        if(!$this->dryRun) {
+            foreach ($publishedArticles as $publishedArticle) {
+                $id = $publishedArticle->getId();
 
-            $article = $articleDAO->getArticle($id);
-            $articleDAO->replace('article_settings',
-                 [
-                     'setting_name' => 'eschol_license_url',
-                     'setting_value' => $row->license_url,
-                     'setting_type' => 'string',
-                     'locale' => 'en_US',
-                     'article_id' => $article->getId(),
-                 ],
-                 [
-                     'article_id',
-                     'locale',
-                     'setting_name'
-                 ]
-            );
+                $article = $articleDAO->getArticle($id);
+                $articleDAO->replace(
+                    'article_settings',
+                    [
+                        'setting_name' => 'eschol_license_url',
+                        'setting_value' => $row->license_url,
+                        'setting_type' => 'string',
+                        'locale' => 'en_US',
+                        'article_id' => $article->getId(),
+                    ],
+                    [
+                        'article_id',
+                        'locale',
+                        'setting_name'
+                    ]
+                );
+            }
         }
 
         $this->log('OK', $row);
