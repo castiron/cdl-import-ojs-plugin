@@ -15,6 +15,11 @@ import('classes.issue.IssueDAO');
 /**
  * @psalm-suppress UndefinedFunction
  */
+import('classes.article.ArticleDAO');
+
+/**
+ * @psalm-suppress UndefinedFunction
+ */
 import('classes.article.PublishedArticleDAO');
 
 class Cc
@@ -40,7 +45,7 @@ class Cc
     protected static $statKeys = [
         'NO_LICENSE_PROVIDED' => 'Import data missing identifiable license',
         'JOURNAL_PATH_NOT_FOUND' => 'Journal not found with with provided in import data',
-        'ISSUE_NOT_FOUND' => 'A single issue could not be identified',
+        'ISSUE_NOT_FOUND' => 'No issue or issues could not be located that matched search criteria',
         'OK' => 'Everything went well!'
     ];
 
@@ -320,45 +325,58 @@ class Cc
             $row->issue_volume,
             $row->issue_number
         )->toArray();
-        if (count($issues) != 1) {
+
+        if (count($issues) == 0) {
             $this->log('ISSUE_NOT_FOUND', $row);
             return;
         }
 
-        /**
-         * @psalm-suppress UndefinedClass
-         */
-        $publishedArticles = (new \PublishedArticleDAO)->getPublishedArticles($issues[0]->getId());
 
+        // iterate the $issues
+        if(!$this->dryRun) {
+            foreach($issues as $issue) {
+                $this->updateArticlesForIssue($issue, $row->license_url);
+            }
+        }
+
+        $this->log('OK', $row);
+    }
+
+    /**
+     * @param \Issue $issue
+     * @param string $licenseUrl
+     */
+    protected function updateArticlesForIssue(\Issue $issue, string $licenseUrl): void
+    {
         /**
          * @psalm-suppress UndefinedClass
          */
         $articleDAO = new \ArticleDAO;
 
-        // iterate the articles
-        if(!$this->dryRun) {
-            foreach ($publishedArticles as $publishedArticle) {
-                $id = $publishedArticle->getId();
+        /**
+         * @psalm-suppress UndefinedClass
+         */
+        $publishedArticles = (new \PublishedArticleDAO)->getPublishedArticles($issue->getId());
 
-                $article = $articleDAO->getArticle($id);
-                $articleDAO->replace(
-                    'article_settings',
-                    [
-                        'setting_name' => 'eschol_license_url',
-                        'setting_value' => $row->license_url,
-                        'setting_type' => 'string',
-                        'locale' => 'en_US',
-                        'article_id' => $article->getId(),
-                    ],
-                    [
-                        'article_id',
-                        'locale',
-                        'setting_name'
-                    ]
-                );
-            }
+        foreach ($publishedArticles as $publishedArticle) {
+            $id = $publishedArticle->getId();
+
+            $article = $articleDAO->getArticle($id);
+            $articleDAO->replace(
+                'article_settings',
+                [
+                    'setting_name' => 'eschol_license_url',
+                    'setting_value' => $licenseUrl,
+                    'setting_type' => 'string',
+                    'locale' => 'en_US',
+                    'article_id' => $article->getId(),
+                ],
+                [
+                    'article_id',
+                    'locale',
+                    'setting_name'
+                ]
+            );
         }
-
-        $this->log('OK', $row);
     }
 }
