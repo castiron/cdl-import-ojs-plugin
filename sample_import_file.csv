@@ -1,0 +1,6 @@
+id	unit_id	volume	issue	published	attrs
+1	asdfasdfsdaf	15	5.1	2014-01-01	{"rights": "https://creativecommons.org/licenses/by-nc/4.0/", "description": ""}
+2	fghjfghjgfhj	3	2	1981-12-01	{"cover": {"width": 175, "height": 232, "image_type": "jpeg"}}
+3	asdasdasd	14	1	1984-01-01	{"cover": {"width": 170, "height": 220, "asset_id": "image_type": "jpeg"}}
+3	asdfdasdasd	15	1	1984-01-01	{"cover": {"width": 170, "height": 220, "asset_id": "image_type": "jpeg", "rights": "https://creativecommons.org/licenses/by-nc/4.0/"}}
+
